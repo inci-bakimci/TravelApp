@@ -1,20 +1,41 @@
-import { View, Text, SafeAreaView, Image, ScrollView, TouchableOpacity } from "react-native";
-import React, { useLayoutEffect, useState } from "react";
+import {
+  View,
+  Text,
+  SafeAreaView,
+  Image,
+  ScrollView,
+  TouchableOpacity,
+  ActivityIndicator,
+} from "react-native";
+import React, { useEffect, useLayoutEffect, useState } from "react";
 import { GooglePlacesAutocomplete } from "react-native-google-places-autocomplete";
 import { useNavigation } from "@react-navigation/native";
-import { Attractions, Avatar, Hotels, Restaurants } from "../assets";
+import { Attractions, Avatar, Hotels, NotFound, Restaurants } from "../assets";
 import MenuContainer from "../components/MenuContainer";
-import { FontAwesome } from '@expo/vector-icons';
+import { FontAwesome } from "@expo/vector-icons";
 import ItemCarDontainer from "../components/ItemCarDontainer";
+import { getPlacesData } from "../api";
 
 const Discover = () => {
   const navigation = useNavigation();
 
   const [type, setType] = useState("restaurants");
+  const [isLoading, setIsLoading] = useState(false);
+  const [mainData, setMainData] = useState([]);
 
   useLayoutEffect(() => {
     navigation.setOptions({
       headerShown: false,
+    });
+  }, []);
+
+  useEffect(() => {
+    setIsLoading(true);
+    getPlacesData().then((data) => {
+      setMainData(data);
+      setInterval(() => {
+        setIsLoading(false);
+      }, 2000);
     });
   }, []);
 
@@ -53,50 +74,89 @@ const Discover = () => {
       </View>
 
       {/*Menu Container */}
-
-      <ScrollView>
-        <View className="flex-row items-center justify-between px-8 mt-8">
-          <MenuContainer
-            key={"hotel"}
-            title="Hotels"
-            imageSrc={Hotels}
-            type={type}
-            setType={setType}
-          />
-
-          <MenuContainer
-            key={"attractions"}
-            title="Attractions"
-            imageSrc={Attractions}
-            type={type}
-            setType={setType}
-          />
-
-          <MenuContainer
-            key={"restaurants"}
-            title="Restaurants"
-            imageSrc={Restaurants}
-            type={type}
-            setType={setType}
-          />
+      {isLoading ? (
+        <View className="flex-1 items-center justify-center">
+          <ActivityIndicator size="large" color="#0B646B" />
         </View>
-        
-        <View>
-          <View className="flex-row items-center justify-between px-4 mt-8">
-            <Text className="text-[#2C7379] text-[28px] font-bold">Top List</Text>
-            <TouchableOpacity className="flex-row items-center justify-center space-x-2">
-              <Text className="text-[#A0C4C7] text-[20px] font-bold">Explore</Text>
-              <FontAwesome name="long-arrow-right" size={24} color="#A0C4C7" />
-            </TouchableOpacity>
+      ) : (
+        <ScrollView>
+          <View className="flex-row items-center justify-between px-8 mt-8">
+            <MenuContainer
+              key={"hotel"}
+              title="Hotels"
+              imageSrc={Hotels}
+              type={type}
+              setType={setType}
+            />
+
+            <MenuContainer
+              key={"attractions"}
+              title="Attractions"
+              imageSrc={Attractions}
+              type={type}
+              setType={setType}
+            />
+
+            <MenuContainer
+              key={"restaurants"}
+              title="Restaurants"
+              imageSrc={Restaurants}
+              type={type}
+              setType={setType}
+            />
           </View>
 
+          <View>
+            <View className="flex-row items-center justify-between px-4 mt-8">
+              <Text className="text-[#2C7379] text-[28px] font-bold">
+                Top List
+              </Text>
+              <TouchableOpacity className="flex-row items-center justify-center space-x-2">
+                <Text className="text-[#A0C4C7] text-[20px] font-bold">
+                  Explore
+                </Text>
+                <FontAwesome
+                  name="long-arrow-right"
+                  size={24}
+                  color="#A0C4C7"
+                />
+              </TouchableOpacity>
+            </View>
 
-          <View className="px-4 mt-4 flex-row items-center justify-evenly flex-wrap">
-            <ItemCarDontainer key={"101"} imageSrc={"https://media.istockphoto.com/id/1384378990/tr/foto%C4%9Fraf/data-stream.jpg?s=612x612&w=is&k=20&c=FsV_bHJrcXQY9K9dBbkhKfzhhdecjQuA4Q-uNNUrJV0="} title="soyut bir kavvramdir" location="natural"/>
-            <ItemCarDontainer key={"102"} imageSrc={"https://media.istockphoto.com/id/1917530589/tr/vekt%C3%B6r/modern-village.jpg?s=2048x2048&w=is&k=20&c=WQL2UngaKKgfZfMPiP84E2N2fFex6xSgdon4N-yy19Y="} title="selam" location="soyut"/>
+            <View className="px-4 mt-4 flex-row items-center justify-evenly flex-wrap">
+              {mainData?.length > 0 ? (
+                <>
+                  {mainData?.map((data, i) => (
+                    <ItemCarDontainer
+                    key={i}
+                    imageSrc={
+                      data?.photo?.images?.medium?.url
+                      ? data?.photo?.images?.medium?.url :
+                      "https://cdn.pixabay.com/photo/2015/10/30/12/22/eat-1014025_1280.jpg"
+                    }
+                    title={data?.name}
+                    location={data?.location_string}
+                  />
+                  ))}
+                  
+                </>
+              ) : (
+                <>
+                  <View className="w-full h-[400px] b items-center space-y-8 justify-center">
+                    <Image
+                      source={NotFound}
+                      className="w-32 h-32 object-cover"
+                    />
+                    <Text className="text-2xl text-[#428288] font-semiboldss">
+                      Opps...No Data Found
+                    </Text>
+                  </View>
+                </>
+              )}
+            </View>
           </View>
-        </View>
-      </ScrollView>
+        </ScrollView>
+      )}
     </SafeAreaView>
   );
 };
