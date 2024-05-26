@@ -40,8 +40,7 @@ const HomeScreen = () => {
         </Text>
 
         <Text className="text-[#3C6072] text-base">
-          Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do
-          eiusmod tempor
+          Go Travel'a Hosgeldiniz!!!
         </Text>
       </View>
 
